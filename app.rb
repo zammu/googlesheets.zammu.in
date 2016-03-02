@@ -2,6 +2,7 @@
 
 require 'sinatra'
 require 'redis'
+require 'sinatra/json'
 #require 'sinatra/reloader'
 
 class Sheet
@@ -83,5 +84,5 @@ get "/sheet/:id/:row_id" do
   sheet = Sheet.find_by_id(params[:id])
   return "sheet not found" if !sheet
   row = sheet.get_row(params[:row_id])
-  row.to_json
+  json row
 end
