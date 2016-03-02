@@ -1,0 +1,14 @@
+#!/usr/bin/env ruby
+APP_USER = 'googlesheets'
+
+def run(cmd)
+  puts ">#{cmd}"
+  exit($?.exitstatus) unless system "umask 002 && #{cmd}"
+end
+
+# update gem bundle
+run "bundle install --deployment --without development:test"
+
+# re-export upstart tasks
+run "sudo /usr/bin/foreman export upstart /etc/init --user #{APP_USER} --app #{APP_USER} --log /opt/#{APP_USER}/log"
+
