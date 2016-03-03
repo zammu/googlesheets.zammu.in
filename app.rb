@@ -5,6 +5,7 @@ require 'redis'
 require 'sinatra/json'
 #require 'sinatra/reloader'
 
+SheetError = Class.new(StandardError)
 class Sheet
   require 'json'
   require 'csv'
@@ -32,7 +33,6 @@ class Sheet
   end
 
   TIMEOUT_SECONDS = 3
-  SheetError = Class.new(StandardError)
   def get_csv
     r = Typhoeus.get(url, followlocation: true, timeout: TIMEOUT_SECONDS)
     return SheetError.new(r.return_code) if !r.success?
