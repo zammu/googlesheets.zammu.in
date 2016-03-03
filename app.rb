@@ -26,11 +26,17 @@ class Sheet
   end
 
   def get_row(row_id)
-    get_csv.find{|x| x[id_column] == row_id}
+    rows = get_csv
+    return rows if rows.is_a?(SheetError)
+    rows.find{|x| x[id_column] == row_id}
   end
 
+  TIMEOUT_SECONDS = 3
+  SheetError = Class.new(StandardError)
   def get_csv
-    CSV.parse(Typhoeus.get(url, followlocation: true).body, headers: true).map{|x| x.to_h}
+    r = Typhoeus.get(url, followlocation: true, timeout: TIMEOUT_SECONDS)
+    return SheetError.new(r.return_code) if !r.success?
+    CSV.parse(r.body, headers: true).map{|x| x.to_h}
   end
 
   def to_s
@@ -82,7 +88,18 @@ end
 
 get "/sheet/:id/:row_id" do
   sheet = Sheet.find_by_id(params[:id])
-  return "sheet not found" if !sheet
+  if !sheet
+    status 404
+    return json(error: "sheet not found")
+  end
   row = sheet.get_row(params[:row_id])
+  if !row
+    status 404
+    return json(error: "row not found in sheet")
+  end
+  if row.is_a?(SheetError)
+    status 400
+    return json(error: row.message)
+  end
   json row
 end
